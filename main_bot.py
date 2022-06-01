@@ -71,6 +71,12 @@ async def get_score(update: Update, context):
 
         else:
             await update.message.reply_text("An unknown error occured. try again later, if doesnt work call +989900784322")
+            log_msg = f"Invalid input reported - {update.message.from_user.full_name} typed: {user_input} for {online_users[update.message.from_user.id]}"
+
+            # log into file
+            log_file = open("log.txt", "a")
+            log_file.write(log_msg + "\n")
+            log_file.close()
     except:
         await update.message.reply_text(f"Failed to connect to server\nTry again...")
 
