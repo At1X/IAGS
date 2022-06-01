@@ -11,7 +11,7 @@ online_users = {}
 
 async def start(update: Update, context):
     await update.message.reply_text("Hello!\nSend me solution ID and I'll send you solution\ntype /sol <solution_id> to get solution\nwhenever file sent to you, you can send its score.")
-    log_msg = f"Started conversation with {update.message.from_user.full_name}"
+    log_msg = f"Started conversation with {update.message.from_user.full_name} and id: {update.message.from_user.id}"
     # write into logFile
     log_file = open("log.txt", "a")
     log_file.write(log_msg + "\n")
@@ -59,8 +59,10 @@ async def get_score(update: Update, context):
             'score_type_id': 4,
         })
         if (response.status_code == 200):
-            await update.message.reply_text(f"🎉 Score sent to server!\nSaved.")
             log_msg = f"Saved score {user_input} for {online_users[update.message.from_user.id]} by {update.message.from_user.full_name}"
+            log_msg_for_telegram = log_msg + f"\nUsername: {update.message.from_user.username}\nID: {update.message.from_user.id}"
+            await context.bot.send_message(chat_id=config("LOG_ACCOUNT"), text=log_msg_for_telegram)
+            await update.message.reply_text(f"🎉 Score sent to server!\nSaved.")
 
             # log into file
             log_file = open("log.txt", "a")
@@ -72,6 +74,7 @@ async def get_score(update: Update, context):
         else:
             await update.message.reply_text("An unknown error occured. try again later, if doesnt work call +989900784322")
             log_msg = f"Invalid input reported - {update.message.from_user.full_name} typed: {user_input} for {online_users[update.message.from_user.id]}"
+
 
             # log into file
             log_file = open("log.txt", "a")
