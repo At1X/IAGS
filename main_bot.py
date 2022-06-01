@@ -1,6 +1,6 @@
-import logging, os, requests
-from telegram import Update, InlineQueryResultArticle, InputTextMessageContent
-from telegram.ext import Updater, CommandHandler, MessageHandler, ApplicationBuilder, filters, InlineQueryHandler, ConversationHandler
+import logging, requests
+from telegram import Update
+from telegram.ext import CommandHandler, MessageHandler, ApplicationBuilder, filters, ConversationHandler
 from decouple import config
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
@@ -15,7 +15,7 @@ async def solution(update: Update, context):
         await update.message.reply_text("Sorry, negative solution ID's are not defined yet.")
         return
     await update.message.reply_text(f"Solution ID: {solution_id}\nWait for solution...")
-    response = requests.get(f"{base_api}{solution_id}/", headers={
+    response = requests.get(f"{base_api}fsm/answers/{solution_id}/", headers={
         'Content-Type': 'application/x-www-form-urlencoded',
         'Authorization': config('JWT_AUTH'),
     })
@@ -28,6 +28,20 @@ async def solution(update: Update, context):
 async def get_score(update: Update, context):
     user_input = update.message.text
     await update.message.reply_text(f"Done! Your score is {user_input} for {solution_id}")
+    try:
+        response = requests.post(f"{base_api}scoring/set_answer_score/", headers={
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Authorization': config('JWT_AUTH'),
+        }, data={
+            'answer_id': solution_id,
+            'score': user_input,
+            'score_type_id': 4,
+        })
+        print(response)
+        await update.message.reply_text(f"Score sent to server!\n")
+    except:
+        await update.message.reply_text(f"Failed to connect to server\nTry again...")
+
     return ConversationHandler.END
 
 async def cancel(update: Update, context):
