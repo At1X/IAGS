@@ -7,6 +7,8 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 SCORE = 1
 base_api = config('BASE_API')
 
+async def start(update: Update, context):
+    await update.message.reply_text("Hello!\nSend me solution ID and I'll send you solution\ntype /sol <solution_id> to get solution\nwhenever file sent to you, you can send its score.")
 
 async def solution(update: Update, context):
     global solution_id
@@ -37,8 +39,11 @@ async def get_score(update: Update, context):
             'score': user_input,
             'score_type_id': 4,
         })
-        print(response)
-        await update.message.reply_text(f"Score sent to server!\n")
+        if (response.status_code == 200):
+            await update.message.reply_text(f"Score sent to server!\nSaved.")
+            print(f"Saved score {user_input} for {solution_id} by {update.message.from_user.full_name}")
+        else:
+            await update.message.reply_text("An unknown error occured. call +989900784322")
     except:
         await update.message.reply_text(f"Failed to connect to server\nTry again...")
 
@@ -58,7 +63,9 @@ conv_handler = ConversationHandler(
         },
         fallbacks=[CommandHandler("cancel", cancel)]
     )
+start_handler = CommandHandler('start', start)
 
+application.add_handler(start_handler)
 application.add_handler(conv_handler)
 
 
