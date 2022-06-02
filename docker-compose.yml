@@ -1,0 +1,14 @@
+version: '3'
+
+volumes:
+  log:
+
+services:
+  bot:
+    image: interkarsolar
+    build: .
+    restart: always
+    volumes:
+      - log:/interkarsolar/Logs
+    command: bash -c "python3 main_bot.py"
+    container_name: interkarsolar_bot

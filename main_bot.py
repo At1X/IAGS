@@ -7,13 +7,14 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 SCORE = 1
 base_api = config('BASE_API')
 online_users = {}
-
+log_path = "Logs/log.txt"
 
 async def start(update: Update, context):
-    await update.message.reply_text("Hello!\nSend me solution ID and I'll send you solution\ntype /sol <solution_id> to get solution\nwhenever file sent to you, you can send its score.")
+    myText = "سلام! شناسهٔ سوالی که می‌خواهید تصحیح کنید را جلوی تگ /sol قرار بدین و پس از دریافت فایل و تصحیح، نمره مربوطه را در چت وارد کنید و منتظر پیام تایید بمانید.\nدر صورت مشاهده هرگونه اشکال در عملکرد ربات حتما با @blacktid در میان بگذارید."
+    await update.message.reply_text(myText)
     log_msg = f"Started conversation with {update.message.from_user.full_name} and id: {update.message.from_user.id}"
     # write into logFile
-    log_file = open("log.txt", "a")
+    log_file = open(log_path, "a")
     log_file.write(log_msg + "\n")
     log_file.close()
 
@@ -40,7 +41,7 @@ async def solution(update: Update, context):
     log_msg = f"Solution {online_users[update.message.from_user.id]} sent to Name: {myUser.from_user.first_name} LastName: {myUser.from_user.last_name}"
 
     # log into file
-    log_file = open("log.txt", "a")
+    log_file = open(log_path, "a")
     log_file.write(log_msg + "\n")
     log_file.close()
 
@@ -65,7 +66,7 @@ async def get_score(update: Update, context):
             await update.message.reply_text(f"🎉 Score sent to server!\nSaved.")
 
             # log into file
-            log_file = open("log.txt", "a")
+            log_file = open(log_path, "a")
             log_file.write(log_msg + "\n")
             log_file.close()
 
@@ -77,7 +78,7 @@ async def get_score(update: Update, context):
 
 
             # log into file
-            log_file = open("log.txt", "a")
+            log_file = open(log_path, "a")
             log_file.write(log_msg + "\n")
             log_file.close()
     except:
