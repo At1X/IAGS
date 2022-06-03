@@ -9,7 +9,7 @@ base_api = config('BASE_API')
 online_users = {}
 log_path = "Logs/log.txt"
 store_users_path = "Logs/stored_users.txt"
-LEVEL, SCORE = range(2)
+GET_ID, LEVEL, SCORE = range(3)
 GET_MESSAGE, CONFIRM = range(2)
 
 
@@ -22,7 +22,7 @@ def check_validation(id):
     user_file.close()
 
 async def start(update: Update, context):
-    myText = "سلام! شناسهٔ سوالی که می‌خواهید تصحیح کنید را جلوی تگ /sol قرار بدین و پس از دریافت فایل و تصحیح، نمره مربوطه را در چت وارد کنید و منتظر پیام تایید بمانید.\nدر صورت مشاهده هرگونه اشکال در عملکرد ربات حتما با @blacktid در میان بگذارید."
+    myText = "سلام کارسوقمند عزیز!\n تگ /sol را داخل چت بفرستید و تصحیح را با حداکثر سرعت شروع کنید! :)\nدر صورت مشاهده هرگونه اشکال در عملکرد ربات حتما با @blacktid در میان بگذارید."
     await update.message.reply_text(myText)
     log_msg = f"Started conversation with {update.message.from_user.full_name} and id: {update.message.from_user.id}"
     # write into logFile
@@ -34,12 +34,12 @@ async def solution(update: Update, context: CallbackContext.DEFAULT_TYPE) -> int
     if not check_validation(update.message.from_user.id):
         await update.message.reply_text("حساب کاربری شما فعال نشده است، اگر فکر می‌کنید اشتباهی رخ داده با @blacktid در میان بگذارید.")
         return ConversationHandler.END
-    try:
-        solution_id = context.args[0]
-        online_users[update.message.from_user.id] = {"solution_id": solution_id}
-    except:
-        await update.message.reply_text("ورودی نامعتبر است، شناسه‌ای را در جلوی تگ /sol بنویسید!")
-        return ConversationHandler.END
+    await update.message.reply_text("شناسه سوالی که می‌خواهید تصحیح کنید را وارد کنید")
+    return GET_ID
+
+async def get_id(update: Update, context: CallbackContext.DEFAULT_TYPE) -> int:
+    solution_id = update.message.text
+    online_users[update.message.from_user.id] = {"solution_id": solution_id}
     if not online_users[update.message.from_user.id]["solution_id"].lstrip("-").isdigit():
         await update.message.reply_text("ورودی نامعتبر است، شناسه‌ ورودی را بصورت عددی بنویسید!")
         return ConversationHandler.END
@@ -172,8 +172,9 @@ async def get_message_confirm(update: Update, context: CallbackContext.DEFAULT_T
                 await context.bot.send_message(chat_id=user_id, text=text_message)
             except:
                 print("Error sending message to user: " + user_id)
+        await update.message.reply_text("پیام با موفقیت ارسال شد.",reply_markup=ReplyKeyboardRemove())
     else:
-        await update.message.reply_text("پیام ارسال نشد.")
+        await update.message.reply_text("پیام ارسال نشد.",reply_markup=ReplyKeyboardRemove())
     return ConversationHandler.END
 
 application = ApplicationBuilder().token(config('BOT_TOKEN')).build()
@@ -181,9 +182,15 @@ application = ApplicationBuilder().token(config('BOT_TOKEN')).build()
 conv_handler = ConversationHandler(
         entry_points=[CommandHandler("sol", solution)],
         states={
+            GET_ID: [
+                MessageHandler(
+                    filters.TEXT,
+                    get_id,
+                )
+            ],
             LEVEL: [
                 MessageHandler(
-                    (filters.TEXT),
+                    filters.TEXT,
                     level_identifier,
                 )
             ],
