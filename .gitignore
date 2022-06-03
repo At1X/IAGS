@@ -1,3 +1,5 @@
 .env
 log.txt
+/Logs
 /venv
+todo.txt
