@@ -10,6 +10,7 @@ online_users = {}
 log_path = "Logs/log.txt"
 store_users_path = "Logs/stored_users.txt"
 LEVEL, SCORE = range(2)
+GET_MESSAGE, CONFIRM = range(2)
 
 
 def check_validation(id):
@@ -73,7 +74,8 @@ async def level_identifier(update: Update, context: CallbackContext.DEFAULT_TYPE
     elif update.message.text == "تصحیح دوم":
         online_users[update.message.from_user.id]["level"] = 5
     else:
-        await update.message.reply_text("ورودی نامعبر، دوباره امتحان کنید.")
+        await update.message.reply_text("ورودی نامعبر، دوباره امتحان کنید.", reply_markup=ReplyKeyboardRemove())
+        return ConversationHandler.END
     await update.message.reply_text("نمره تصحیح را وارد کنید",reply_markup=ReplyKeyboardRemove())
     return SCORE
 
@@ -129,6 +131,50 @@ async def sendBackup(update: Update, context):
     else:
         await update.message.reply_text("رمزعبور صحیح نیست.")
 
+async def give_permission(update: Update, context):
+    if str(update.message.from_user.id) == config('EVENT_ADMIN') or str(update.message.from_user.id) == config('BOT_ADMIN'):
+        user_id = context.args[0]
+        stored_users = open(store_users_path, 'a+')
+        stored_users.write(f"{user_id}\n")
+        stored_users.close()
+        await update.message.reply_text("درخواست دسترسی با موفقیت انجام شد.")
+    else:
+        await update.message.reply_text("دسترسی شما برای انجام این کار مسدود می‌باشد!")
+        return
+
+async def send_message(update: Update, context):
+    if str(update.message.from_user.id) == config('EVENT_ADMIN') or str(update.message.from_user.id) == config('BOT_ADMIN'):
+        await context.bot.send_message(chat_id=update.effective_chat.id, text="متن خود را وارد کنید")
+        return GET_MESSAGE
+    else:
+        await update.message.reply_text("دسترسی شما برای انجام این کار مسدود می‌باشد!")
+        return ConversationHandler.END
+
+async def get_message(update: Update, context: CallbackContext.DEFAULT_TYPE):
+    global text_message
+    text_message = update.message.text
+    await context.bot.send_message(chat_id=update.effective_chat.id, text=f"Your message:\n{text_message}")
+    await update.message.reply_text("پیام ارسال شود؟",
+                                    reply_markup=ReplyKeyboardMarkup([["بله", "خیر"]],
+                                    one_time_keyboard=True,
+                                    resize_keyboard=True))
+
+    return CONFIRM
+
+async def get_message_confirm(update: Update, context: CallbackContext.DEFAULT_TYPE):
+    confirm_message = update.message.text
+    if confirm_message == "بله":
+        users_file = open(store_users_path, "r")
+        lines = users_file.readlines()
+        for line in lines:
+            user_id = line.strip()
+            try:
+                await context.bot.send_message(chat_id=user_id, text=text_message)
+            except:
+                print("Error sending message to user: " + user_id)
+    else:
+        await update.message.reply_text("پیام ارسال نشد.")
+    return ConversationHandler.END
 
 application = ApplicationBuilder().token(config('BOT_TOKEN')).build()
 
@@ -137,7 +183,7 @@ conv_handler = ConversationHandler(
         states={
             LEVEL: [
                 MessageHandler(
-                    (filters.TEXT & filters.Regex("^(تصحیح اول|تصحیح دوم)$")),
+                    (filters.TEXT),
                     level_identifier,
                 )
             ],
@@ -150,13 +196,34 @@ conv_handler = ConversationHandler(
         },
         fallbacks=[CommandHandler("cancel", cancel)]
     )
+send_message_handler = ConversationHandler(
+        entry_points=[CommandHandler("send_message", send_message)],
+        states={
+            GET_MESSAGE: [
+                MessageHandler(
+                    filters.TEXT,
+                    get_message,
+                )
+            ],
+            CONFIRM: [
+                MessageHandler(
+                    filters.TEXT & ~filters.COMMAND & filters.Regex("^(بله|خیر)$"),
+                    get_message_confirm,
+                )
+            ]
+        },
+        fallbacks=[CommandHandler("cancel", cancel)]
+)
 
 start_handler = CommandHandler('start', start)
 backup_handler = CommandHandler('backup', sendBackup)
+give_permission_handler = CommandHandler('add', give_permission)
 
 application.add_handler(start_handler)
 application.add_handler(conv_handler)
 application.add_handler(backup_handler)
+application.add_handler(give_permission_handler)
+application.add_handler(send_message_handler)
 
 application.run_polling()
 
