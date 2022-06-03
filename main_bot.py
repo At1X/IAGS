@@ -1,6 +1,6 @@
 import logging, requests
 from telegram import Update, ReplyKeyboardMarkup, ReplyKeyboardRemove
-from telegram.ext import CallbackContext, MessageHandler, ApplicationBuilder, filters, ConversationHandler, CommandHandler
+from telegram.ext import CallbackContext, MessageHandler, ApplicationBuilder, ConversationHandler, CommandHandler, filters
 from decouple import config
 
 #config
@@ -12,22 +12,27 @@ store_users_path = "Logs/stored_users.txt"
 LEVEL, SCORE = range(2)
 
 
-def store_users(id):
-    user_file = open(store_users_path, "a")
-    user_file.write(str(id) + "\n")
+def check_validation(id):
+    user_file = open(store_users_path, "r")
+    lines = user_file.readlines()
+    for line in lines:
+        if str(id) + '\n' == line:
+            return True
     user_file.close()
 
 async def start(update: Update, context):
     myText = "سلام! شناسهٔ سوالی که می‌خواهید تصحیح کنید را جلوی تگ /sol قرار بدین و پس از دریافت فایل و تصحیح، نمره مربوطه را در چت وارد کنید و منتظر پیام تایید بمانید.\nدر صورت مشاهده هرگونه اشکال در عملکرد ربات حتما با @blacktid در میان بگذارید."
     await update.message.reply_text(myText)
     log_msg = f"Started conversation with {update.message.from_user.full_name} and id: {update.message.from_user.id}"
-    store_users(update.message.from_user.id)
     # write into logFile
     log_file = open(log_path, "a")
     log_file.write(log_msg + "\n")
     log_file.close()
 
 async def solution(update: Update, context: CallbackContext.DEFAULT_TYPE) -> int:
+    if not check_validation(update.message.from_user.id):
+        await update.message.reply_text("حساب کاربری شما فعال نشده است، اگر فکر می‌کنید اشتباهی رخ داده با @blacktid در میان بگذارید.")
+        return ConversationHandler.END
     try:
         solution_id = context.args[0]
         online_users[update.message.from_user.id] = {"solution_id": solution_id}
@@ -155,4 +160,3 @@ application.add_handler(backup_handler)
 
 application.run_polling()
 
-#TODO : login for every user
