@@ -27,4 +27,4 @@ jobs:
           git pull ${{ secrets.REPO_URL }}
           docker-compose down
           docker rmi interkarsolar
-          docker-compose up
+          docker-compose up -d
