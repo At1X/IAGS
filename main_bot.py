@@ -95,8 +95,13 @@ async def get_score(update: Update, context: CallbackContext.DEFAULT_TYPE) -> in
         response = 0
         await update.message.reply_text(f"اتصال به سرور ناموفق بود، مجددا تلاش کنید")
     if (response.status_code == 200):
-        log_msg = f"Saved score {online_users[update.message.from_user.id]['score']} for {online_users[update.message.from_user.id]['solution_id']} by {update.message.from_user.full_name}"
+        if online_users[update.message.from_user.id]["level"] == 4:
+            level_ui = "Primary score"
+        elif online_users[update.message.from_user.id]["level"] == 5:
+            level_ui = "Secondary score"
+        log_msg = f"{level_ui} {online_users[update.message.from_user.id]['score']} for {online_users[update.message.from_user.id]['solution_id']} by {update.message.from_user.full_name}"
         log_msg_for_telegram = log_msg + f"\nUsername: {update.message.from_user.username}\nID: {update.message.from_user.id}"
+        await context.bot.send_message(chat_id=update.effective_chat.id, text=log_msg + "\n\n" + "درصورت مغایرت اطلاعات این پیام، فورا اطلاع دهید.")
         await context.bot.send_message(chat_id=config("EVENT_ADMIN"), text=log_msg_for_telegram)
         await update.message.reply_text(f"نمره با موفقیت ذخیره شد. 🎉")
         # log into file
