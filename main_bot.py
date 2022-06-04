@@ -80,6 +80,9 @@ async def level_identifier(update: Update, context: CallbackContext.DEFAULT_TYPE
     return SCORE
 
 async def get_score(update: Update, context: CallbackContext.DEFAULT_TYPE) -> int:
+    if not 0 <= int(update.message.text) <= 100:
+        await update.message.reply_text("نمره باید بین صفر تا صد باشه!\nمجددا شناسه بزنید.")
+        return ConversationHandler.END
     online_users[update.message.from_user.id]["score"] = update.message.text
     msg_handler = await update.message.reply_text(f"درحال ارسال به سرور\n لطفا مقداری صبر کنید")
     try:
@@ -194,6 +197,7 @@ async def get_users_id(update: Update, context: CallbackContext.DEFAULT_TYPE):
                                        f"with id: {update.message.from_user.id}\n"\
                                        "requested to add."
                                        )
+        await update.message.reply_text("درخواست شما ارسال شد، سعی می‌کنیم در اسرع وقت به درخواستتون پاسخ بدیم!\n از صبر و شکیبایی شما سپاسگزاریم! :)",)
 
 application = ApplicationBuilder().token(config('BOT_TOKEN')).build()
 
