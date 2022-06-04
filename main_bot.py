@@ -81,7 +81,7 @@ async def level_identifier(update: Update, context: CallbackContext.DEFAULT_TYPE
 
 async def get_score(update: Update, context: CallbackContext.DEFAULT_TYPE) -> int:
     online_users[update.message.from_user.id]["score"] = update.message.text
-    await update.message.reply_text(f"درحال ارسال به سرور\n لطفا مقداری صبر کنید")
+    msg_handler = await update.message.reply_text(f"درحال ارسال به سرور\n لطفا مقداری صبر کنید")
     try:
         response = requests.post(f"{base_api}scoring/set_answer_score/", headers={
             'Content-Type': 'application/x-www-form-urlencoded',
@@ -95,6 +95,7 @@ async def get_score(update: Update, context: CallbackContext.DEFAULT_TYPE) -> in
         response = 0
         await update.message.reply_text(f"اتصال به سرور ناموفق بود، مجددا تلاش کنید")
     if (response.status_code == 200):
+        await context.bot.edit_message_text("نمره با موفقیت ذخیره شد! 🥳", chat_id=update.effective_chat.id, message_id=msg_handler.message_id)
         if online_users[update.message.from_user.id]["level"] == 4:
             level_ui = "Primary score"
         elif online_users[update.message.from_user.id]["level"] == 5:
@@ -103,7 +104,6 @@ async def get_score(update: Update, context: CallbackContext.DEFAULT_TYPE) -> in
         log_msg_for_telegram = log_msg + f"\nUsername: {update.message.from_user.username}\nID: {update.message.from_user.id}"
         await context.bot.send_message(chat_id=update.effective_chat.id, text=log_msg + "\n\n" + "درصورت مغایرت اطلاعات این پیام، فورا اطلاع دهید.")
         await context.bot.send_message(chat_id=config("EVENT_ADMIN"), text=log_msg_for_telegram)
-        await update.message.reply_text(f"نمره با موفقیت ذخیره شد. 🎉")
         # log into file
         log_file = open(log_path, "a")
         log_file.write(log_msg + "\n")
@@ -142,6 +142,9 @@ async def give_permission(update: Update, context):
         stored_users = open(store_users_path, 'a+')
         stored_users.write(f"{user_id}\n")
         stored_users.close()
+        welcome_msg = "ووهو! دسترسیت به ربات باز شد\n" \
+                      "بزن بریم صحیح کنیم! :)))"
+        await context.bot.send_message(chat_id=user_id, text=welcome_msg)
         await update.message.reply_text("درخواست دسترسی با موفقیت انجام شد.")
     else:
         await update.message.reply_text("دسترسی شما برای انجام این کار مسدود می‌باشد!")
