@@ -185,6 +185,16 @@ async def get_message_confirm(update: Update, context: CallbackContext.DEFAULT_T
         await update.message.reply_text("پیام ارسال نشد.",reply_markup=ReplyKeyboardRemove())
     return ConversationHandler.END
 
+async def get_users_id(update: Update, context: CallbackContext.DEFAULT_TYPE):
+    if check_validation(update.message.from_user.id):
+        await update.message.reply_text("شما قبلا به کاربران ویژه اضافه شده‌اید، به تصحیح بپردازید :))")
+        return
+    else:
+        await context.bot.send_message(chat_id=config("BOT_ADMIN"), text=f"user: {update.message.from_user.full_name}\n"\
+                                       f"with id: {update.message.from_user.id}\n"\
+                                       "requested to add."
+                                       )
+
 application = ApplicationBuilder().token(config('BOT_TOKEN')).build()
 
 conv_handler = ConversationHandler(
@@ -233,12 +243,14 @@ send_message_handler = ConversationHandler(
 start_handler = CommandHandler('start', start)
 backup_handler = CommandHandler('backup', sendBackup)
 give_permission_handler = CommandHandler('add', give_permission)
+get_user_id_handler = CommandHandler('addme', get_users_id)
 
 application.add_handler(start_handler)
 application.add_handler(conv_handler)
 application.add_handler(backup_handler)
 application.add_handler(give_permission_handler)
 application.add_handler(send_message_handler)
+application.add_handler(get_user_id_handler)
 
 application.run_polling()
 
