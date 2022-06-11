@@ -89,7 +89,6 @@ async def level_identifier(update: Update, context: CallbackContext.DEFAULT_TYPE
         await update.message.reply_text("ورودی نامعبر، دوباره امتحان کنید.", reply_markup=ReplyKeyboardRemove())
         return ConversationHandler.END
     await update.message.reply_text("نمره تصحیح را وارد کنید",reply_markup=ReplyKeyboardRemove())
-    await update.message.from_user.full_name
     return SCORE
 
 async def get_score(update: Update, context: CallbackContext.DEFAULT_TYPE) -> int:
