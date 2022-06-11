@@ -1,5 +1,6 @@
 import logging, requests
 from telegram import Update, ReplyKeyboardMarkup, ReplyKeyboardRemove
+import telegram
 from telegram.ext import CallbackContext, MessageHandler, ApplicationBuilder, ConversationHandler, CommandHandler, filters
 from decouple import config
 
@@ -56,11 +57,22 @@ async def get_id(update: Update, context: CallbackContext.DEFAULT_TYPE) -> int:
         return ConversationHandler.END
 
     log_msg = f"Solution {online_users[update.message.from_user.id]['solution_id']} sent to {update.message.from_user.full_name} and id: {update.message.from_user.id}"
-    await context.bot.send_document(
-                                    chat_id=update.effective_chat.id,
-                                    document=response.json()['answer_file'],
-                                    reply_markup=ReplyKeyboardMarkup([['تصحیح اول','تصحیح دوم']], one_time_keyboard=True, resize_keyboard=True)
-                                    )
+    try:
+        await context.bot.send_document(
+                                        chat_id=update.effective_chat.id,
+                                        document=response.json()['answer_file'],
+                                        reply_markup=ReplyKeyboardMarkup([['تصحیح اول','تصحیح دوم']], one_time_keyboard=True, resize_keyboard=True)
+                                        )
+    except telegram.error.BadRequest:
+        await context.bot.send_message(
+            chat_id=update.effective_chat.id,
+            text="متاسفیم، اشکالی در ارسال فایل این شناسه وجود داشت، در تلاشیم تا هرچه زودتر مشکل را برطرف کنیم\nبرای مشاهده پاسخ لینک زیر را باز کنید!"
+        )
+        await context.bot.send_message(
+            chat_id=update.effective_chat.id ,
+            text=response.json()['answer_file'],
+            reply_markup=ReplyKeyboardMarkup([['تصحیح اول','تصحیح دوم']], one_time_keyboard=True, resize_keyboard=True)
+        )
     # log into file
     log_file = open(log_path, "a")
     log_file.write(log_msg + "\n")
@@ -77,6 +89,7 @@ async def level_identifier(update: Update, context: CallbackContext.DEFAULT_TYPE
         await update.message.reply_text("ورودی نامعبر، دوباره امتحان کنید.", reply_markup=ReplyKeyboardRemove())
         return ConversationHandler.END
     await update.message.reply_text("نمره تصحیح را وارد کنید",reply_markup=ReplyKeyboardRemove())
+    await update.message.from_user.full_name
     return SCORE
 
 async def get_score(update: Update, context: CallbackContext.DEFAULT_TYPE) -> int:
