@@ -92,9 +92,14 @@ async def level_identifier(update: Update, context: CallbackContext.DEFAULT_TYPE
     return SCORE
 
 async def get_score(update: Update, context: CallbackContext.DEFAULT_TYPE) -> int:
-    if not 0 <= int(update.message.text) <= 100:
-        await update.message.reply_text("نمره باید بین صفر تا صد باشه!\nمجددا شناسه بزنید.")
+    if (update.message.text.isnumeric()):
+        if(not 0 <= int(update.message.text) <= 100):
+            await update.message.reply_text("ورودی شما باید بین صفر تا صد باشد!")
+            return ConversationHandler.END
+    else:
+        await update.message.reply_text("ورودی شما باید عددی مثبت باشد!")
         return ConversationHandler.END
+
     online_users[update.message.from_user.id]["score"] = update.message.text
     msg_handler = await update.message.reply_text(f"درحال ارسال به سرور\n لطفا مقداری صبر کنید")
     try:
